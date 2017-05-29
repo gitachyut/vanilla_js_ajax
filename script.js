@@ -1,26 +1,33 @@
+function vanillaJsAjax(type,url,files,fnUploadStatus,fnUploadDone,errors){
+    var xml = new XMLHttpRequest()
+    xml.open(type,url)
+    xml.upload.addEventListener('progress', function(e){
+        let uploadingStatus = e.loaded/e.total;
+        uploadingStatus =  Math.ceil(uploadingStatus*100);
+        fnUploadStatus(uploadingStatus)
+    }, false);
+    xml.onloadend = function(){
+      fnUploadDone(files);
+    }
+    xml.send(files)
+}
+
 document.getElementById('uploadform').addEventListener('submit',function(e){
   e.preventDefault()
-  var form = e.target
-  var formData = new FormData(form)
-  var xml = new XMLHttpRequest()
   var files = document.getElementById("upload").files
   var pbar = document.getElementById("prog")
-  xml.open("POST","http://localhost:8000/a.php")
-  xml.upload.addEventListener('progress', function(e){
-      let up = e.loaded/e.total;
-      pbar.value = Math.ceil(up*100);
-  }, false);
-  xml.onloadend = function(){
-    if(this.status == 200  ){
-      pbar.value = 0
-    }
-    var str = '<br>';
-    for(file of files){
+  var status = document.getElementById("status")
+
+  vanillaJsAjax("POST","http://localhost:8000/a.php",files,function(res){
+    pbar.value = res;
+  },function(res){
+    let str= '';
+    for(file of res){
       str  = str + '<li>'+file.name+'</li>'
     }
-    form.reset()
-    document.getElementById("status").innerHTML = "Uploaded Files :-"+str
-  }
-  formData.append("file", files);
-  xml.send(formData)
+    pbar.value = 0;
+    status.innerHTML = "Uploaded Files :-<br>"+str
+  })
+
+
 })
